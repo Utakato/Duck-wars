@@ -22,7 +22,7 @@ const MAX_LOOPS = 12;       // simultaneous sustained loops
 const XFADE = 0.6;          // music crossfade in seconds
 const MASTER_GAIN = 0.5;
 const SFX_GAIN = 1.0;
-const MUSIC_GAIN = 0.32;    // music bus sits about 10 dB under the sfx bus
+const MUSIC_GAIN = 0.2;     // music bus sits about 14 dB under the sfx bus
 const NOISE_RMS = 0.5;     // every noise colour is normalised to this level
 
 function clamp(x, lo, hi) { return x < lo ? lo : (x > hi ? hi : x); }
@@ -547,6 +547,7 @@ export function createAudio(opts) {
   let offline = false;      // true for an OfflineAudioContext
   let broken = false;       // Web Audio unavailable: everything becomes a no-op
   let master = null;
+  let tail = null;
   let comp = null;
   let sfxBus = null;
   let musicBus = null;
@@ -650,9 +651,29 @@ export function createAudio(opts) {
       comp.attack.value = 0.002;
       comp.release.value = 0.2;
       master.connect(comp);
-      comp.connect(c.destination);
+      tail = comp;
     } else {
-      master.connect(c.destination);
+      tail = master;
+    }
+    // Safety net behind the compressor: its attack lets the first milliseconds of a pile-up
+    // through, so a soft clipper bends anything above 0.7 and never lets a sample past 0.95.
+    const shaper = (typeof c.createWaveShaper === 'function') ? c.createWaveShaper() : null;
+    if (shaper) {
+      const N = 2049, curve = new Float32Array(N), knee = 0.7, top = 0.95;
+      for (let i = 0; i < N; i++) {
+        const x = (i / (N - 1)) * 4 - 2;            // input range -2..2
+        const ax = Math.abs(x);
+        const y = ax <= knee ? ax : knee + (top - knee) * (1 - Math.exp(-(ax - knee) / (top - knee)));
+        curve[i] = x < 0 ? -y : y;
+      }
+      const pre = c.createGain();
+      pre.gain.value = 0.5;                         // map -2..2 onto the shaper's -1..1 input
+      shaper.curve = curve;
+      tail.connect(pre);
+      pre.connect(shaper);
+      shaper.connect(c.destination);
+    } else {
+      tail.connect(c.destination);
     }
 
     noise = { white: makeNoise('white'), pink: makeNoise('pink'), brown: makeNoise('brown') };

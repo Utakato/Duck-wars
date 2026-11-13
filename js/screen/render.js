@@ -92,7 +92,7 @@ export function createRenderer(canvas, fx) {
   let map = null;
   let pal = PALETTES.day;
   let land = null;                 // baked RGBA canvas
-  let contours = [];               // Path2D per foam level
+  let contours = [];               // one pre-rendered canvas per foam level
   let stalks = [];                 // reed stalks
   let lilies = [];
   let flowDust = [];
@@ -100,6 +100,7 @@ export function createRenderer(canvas, fx) {
   let safe = { left: 0, top: 0, right: 1, bottom: 1 };
   let quality = 1;                 // 1 full, 0 reduced (auto, see main.js)
   const cos = {};                  // per-seat cosmetic state
+  let lastBakeMs = 0;
 
   function cosFor(seat) {
     return cos[seat] || (cos[seat] = { wake: 0, ring: 0, blink: 2 + Math.random() * 3, blinkT: 0, bub: 0, fire: 0, trail: 0, sx: 0, sy: 0, has: false });
@@ -107,6 +108,7 @@ export function createRenderer(canvas, fx) {
 
   // ---- baking -----------------------------------------------------------------------------------
   function bake(m) {
+    const bakeStart = Date.now();
     map = m;
     pal = PALETTES[m.palette] || PALETTES.day;
     const BW = ARENA_W + MARGIN * 2, BH = ARENA_H + MARGIN * 2;
@@ -283,7 +285,12 @@ export function createRenderer(canvas, fx) {
           }
         }
       }
-      contours.push(path);
+      // Stroke it once into its own layer; per frame it is a single alpha-blended blit.
+      const fc = makeCanvas(ARENA_W, ARENA_H);
+      const fctx = fc.getContext("2d");
+      fctx.strokeStyle = "#ffffff"; fctx.lineCap = "round"; fctx.lineWidth = 2.6 - li * 0.5;
+      fctx.stroke(path);
+      contours.push(fc);
     }
 
     // reed stalks
@@ -322,6 +329,7 @@ export function createRenderer(canvas, fx) {
       }
     }
     for (const k in cos) delete cos[k];
+    lastBakeMs = Date.now() - bakeStart;
   }
 
   // ---- sizing -----------------------------------------------------------------------------------
@@ -450,14 +458,14 @@ export function createRenderer(canvas, fx) {
   }
 
   function drawFoam(time) {
-    ctx.lineCap = "round";
+    if (quality <= 0) return;
     for (let i = 0; i < contours.length; i++) {
       const a = Math.max(0, Math.sin(time * 1.25 - i * 1.9)) * 0.42;
       if (a < 0.02) continue;
-      ctx.strokeStyle = "rgba(255,255,255," + a.toFixed(3) + ")";
-      ctx.lineWidth = 2.6 - i * 0.5;
-      ctx.stroke(contours[i]);
+      ctx.globalAlpha = a;
+      ctx.drawImage(contours[i], 0, 0);
     }
+    ctx.globalAlpha = 1;
   }
 
   function drawLilies(time) {
@@ -488,28 +496,42 @@ export function createRenderer(canvas, fx) {
   }
 
   function drawReeds(time) {
+    if (!stalks.length) return;
     ctx.lineCap = "round";
     const dark = map.palette === "frost" ? "#6d8a78" : (map.palette === "night" ? "#1f5a45" : "#2f7d32");
     const lite = map.palette === "frost" ? "#9db8a4" : (map.palette === "night" ? "#2f7d5b" : "#58b04a");
+    // Three strokes for the whole pond instead of three per stalk.
     for (let i = 0; i < stalks.length; i++) {
       const s = stalks[i];
-      const sw = Math.sin(time * 1.4 + s.ph) * 2.6 + s.sway + s.lean;
-      const tx = s.x + sw, ty = s.y - s.h;
-      ctx.strokeStyle = dark; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.quadraticCurveTo(s.x + sw * 0.2, s.y - s.h * 0.6, tx, ty); ctx.stroke();
-      ctx.strokeStyle = lite; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.quadraticCurveTo(s.x + sw * 0.2, s.y - s.h * 0.6, tx, ty); ctx.stroke();
-      // side blade
-      ctx.strokeStyle = dark; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.quadraticCurveTo(s.x - 5 + sw * 0.3, s.y - s.h * 0.45, s.x - 9 + sw * 0.7, s.y - s.h * 0.72); ctx.stroke();
-      if (s.tail) {
-        ctx.save();
-        ctx.translate(tx, ty + 5); ctx.rotate(sw * 0.03);
-        roundRect(ctx, -3.2, -9, 6.4, 13, 3.2);
-        ctx.fillStyle = "#7a4a21"; ctx.fill();
-        ctx.lineWidth = 1.4; ctx.strokeStyle = "#3d230d"; ctx.stroke();
-        ctx.restore();
+      s.sw = Math.sin(time * 1.4 + s.ph) * 2.6 + s.sway + s.lean;
+    }
+    ctx.strokeStyle = dark; ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = 0; i < stalks.length; i++) {
+      const s = stalks[i];
+      ctx.moveTo(s.x, s.y); ctx.quadraticCurveTo(s.x - 5 + s.sw * 0.3, s.y - s.h * 0.45, s.x - 9 + s.sw * 0.7, s.y - s.h * 0.72);
+    }
+    ctx.stroke();
+    for (let pass = 0; pass < 2; pass++) {
+      ctx.strokeStyle = pass ? lite : dark; ctx.lineWidth = pass ? 2 : 4;
+      ctx.beginPath();
+      for (let i = 0; i < stalks.length; i++) {
+        const s = stalks[i];
+        ctx.moveTo(s.x, s.y); ctx.quadraticCurveTo(s.x + s.sw * 0.2, s.y - s.h * 0.6, s.x + s.sw, s.y - s.h);
       }
+      ctx.stroke();
+    }
+    // cattail heads: thick round-capped strokes, one path for the outline and one for the fill
+    for (let pass = 0; pass < 2; pass++) {
+      ctx.strokeStyle = pass ? "#7a4a21" : "#3d230d"; ctx.lineWidth = pass ? 5.4 : 8;
+      ctx.beginPath();
+      for (let i = 0; i < stalks.length; i++) {
+        const s = stalks[i];
+        if (!s.tail) continue;
+        const tx = s.x + s.sw, ty = s.y - s.h;
+        ctx.moveTo(tx - s.sw * 0.04, ty + 6); ctx.lineTo(tx + s.sw * 0.04, ty - 2);
+      }
+      ctx.stroke();
     }
   }
 
@@ -862,6 +884,21 @@ export function createRenderer(canvas, fx) {
   }
 
   // ---- HUD --------------------------------------------------------------------------------------
+  const portraits = {};
+  function portrait(color, hat, out) {
+    const key = color + ":" + hat + ":" + (out ? 1 : 0);
+    let c = portraits[key];
+    if (c) return c;
+    c = portraits[key] = makeCanvas(102, 102);
+    const pc = c.getContext("2d");
+    pc.scale(3, 3);
+    pc.beginPath(); pc.arc(17, 17, 17, 0, TAU); pc.fillStyle = COLORS[color % COLORS.length].dark; pc.fill();
+    pc.clip();
+    pc.translate(13, 17); pc.scale(0.62, 0.62);
+    drawDuck(pc, { color: color, hat: hat, facing: 0, aim: 0, mood: out ? "dead" : "normal", t: 1, weapon: -1 });
+    return c;
+  }
+
   function drawHud(hud, time) {
     if (!hud) return;
     ctx.lineJoin = "round";
@@ -879,12 +916,7 @@ export function createRenderer(canvas, fx) {
         roundRect(ctx, x, y, pw, ph, 21);
         ctx.fillStyle = "rgba(16,22,36,0.82)"; ctx.fill();
         ctx.lineWidth = s.lead ? 3.5 : 2; ctx.strokeStyle = s.lead ? "#ffd23f" : col.body; ctx.stroke();
-        ctx.save();
-        ctx.beginPath(); ctx.arc(x + 21, y + 21, 17, 0, TAU); ctx.fillStyle = col.dark; ctx.fill();
-        ctx.clip();
-        ctx.translate(x + 17, y + 21); ctx.scale(0.62, 0.62);
-        drawDuck(ctx, { color: s.color, hat: s.hat, facing: 0, aim: 0, mood: s.out ? "dead" : "normal", t: time, weapon: -1 });
-        ctx.restore();
+        ctx.drawImage(portrait(s.color, s.hat, s.out), x + 4, y + 4, 34, 34);
         ctx.textBaseline = "middle"; ctx.textAlign = "left";
         ctx.font = "600 " + (pw > 140 ? 15 : 13) + "px " + FONT_UI;
         ctx.fillStyle = col.light;
@@ -990,6 +1022,7 @@ export function createRenderer(canvas, fx) {
     setSafeArea: function (s) { safe = s; resize(); },
     setQuality: function (q) { if (q !== quality) { quality = q; resize(); } },
     getQuality: function () { return quality; },
+    bakeMs: function () { return lastBakeMs; },
     palette: function () { return pal; }
   };
 }

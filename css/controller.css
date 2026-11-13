@@ -133,10 +133,12 @@ body {
 .btn.fire { flex: 1; background: #ff5964; color: #fff; font-size: 15vh; text-shadow: 0 0.8vh 0 rgba(0, 0, 0, 0.3); }
 .btn.fire.boo { background: #b9c4e8; color: var(--ink); text-shadow: none; }
 
+/* Sits above the stick, clear of the buttons on the right. */
 .banner {
-  position: absolute; left: 50%; top: 20vh; transform: translateX(-50%); display: none;
+  position: absolute; left: 25%; top: 19.5vh; transform: translateX(-50%); display: none;
+  width: 44vw; box-sizing: border-box;
   background: rgba(10, 14, 26, 0.9); border: 0.7vh solid var(--pc); border-radius: 3vh;
-  padding: 1.6vh 3vw; font-size: 5.4vh; font-weight: 600; text-align: center; pointer-events: none; white-space: nowrap;
+  padding: 1.2vh 1.5vw; font-size: 5vh; line-height: 1.15; font-weight: 600; text-align: center; pointer-events: none;
 }
 .banner.on { display: block; }
 .toast {

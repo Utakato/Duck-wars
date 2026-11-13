@@ -95,11 +95,16 @@ export const BOT_NAMES = [
 //   { m: "start" } { m: "rematch" } { m: "lobby" }      master only
 //   { m: "cfg", k: "mode"|"map"|"goal"|"bots"|"diff", d: -1|1 }   master only
 //   { m: "hat", d: -1|1 }              change own hat (lobby)
+//   { m: "quack" }                     quack in the lobby
 // screen -> controller
-//   { s: [hp, weapon, ammo, life, cd, shield, loaf] }   own duck status, on change (max 10/s)
-//       life: 0 dead / waiting, 1 alive, 2 ghost.  cd: respawn seconds or 0.
+//   { s: [hp, weapon, ammo, life, cd, shield, loaf, diveBusy] }   own duck, on change (max 10/s)
+//       life: 0 out / waiting, 1 alive, 2 ghost.  cd: respawn seconds or 0.
 //   { v: n }                           vibrate, n is a VIBE id
 //   { t: "text" }                      short toast for this player
+// screen custom device state (everything a phone needs to draw itself after a reload)
+//   { view: "LOBBY"|"GAME"|"RESULTS", cfg: [mode, map, goal, bots, diff], bots,
+//     seats: { <device id>: [seat, hat] }, mode, round, late,
+//     res: { w: winner name, wc: winner seat, r: { <device id>: [place, score, splashes] } } }
 export const VIBE = { HIT: 1, DIE: 2, PICKUP: 3, WIN: 4, KILL: 5, START: 6 };
 
 export const INPUT_FIRE = 1;

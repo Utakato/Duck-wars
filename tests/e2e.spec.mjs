@@ -82,7 +82,7 @@ async function until(fn, timeout, label) {
     await sleep(60);
   }
 }
-const addPhone = async () => { const id = await H((h) => h.addController()); await until(() => view(id).then((v) => v && v !== "CONNECT"), 8000, "phone " + id + " ready"); return id; };
+const addPhone = async () => { const id = await H((h) => h.addController()); await until(() => view(id).then((v) => v === "LOBBY" || v === "GAME"), 8000, "phone " + id + " seated"); return id; };
 const screenText = (sel) => page.evaluate((sel) => { const e = window.harness.win(0).document.querySelector(sel); return e ? e.textContent : null; }, sel);
 
 // Ends an elimination round at once: everybody but one duck is out.
@@ -288,7 +288,7 @@ try {
   const extra = [];
   for (let i = 0; i < 8; i++) extra.push(await H((h) => h.addController()));
   await until(() => G((g) => g.seats.filter(Boolean).length === 8), 15000, "8 seats taken");
-  await until(() => view(extra[7]).then((v) => v === "WAIT"), 8000);
+  await until(() => text(extra[7], "#wait-text").then((t) => /full/.test(t || "")), 8000);
   check("eight phones are seated", await G((g) => g.seats.filter(Boolean).length) === 8);
   check("the ninth phone is told the pond is full", await view(extra[7]) === "WAIT" && /full/.test(await text(extra[7], "#wait-text")), await text(extra[7], "#wait-text"));
   await H((h, id) => h.removeController(id), extra[0]);

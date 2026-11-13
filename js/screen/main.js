@@ -51,12 +51,14 @@ let lastHitSfx = 0;
 let perfT = 0, perfFrames = 0, perfSlow = 0;
 let resultsT = 0;
 let qualityLock = false;
+let needsPaint = true;
 
 function getMap(id) { return maps[id] || (maps[id] = buildMap(id)); }
 
 function useMap(id) {
   const m = getMap(id);
   if (bakedMap !== m) { renderer.bake(m); bakedMap = m; }
+  needsPaint = true;
   return m;
 }
 
@@ -110,6 +112,17 @@ function takeSeat(deviceId) {
     dive: undefined, quack: undefined, statusKey: "", statusT: 0, vibeT: 0
   };
   return free;
+}
+
+// Give free seats to connected phones that have none (a seat freed up, or they came in while a
+// round was running). Returns true when somebody was seated.
+function seatWaiting() {
+  const ids = airconsole.getControllerDeviceIds();
+  let changed = false;
+  for (let i = 0; i < ids.length; i++) {
+    if (seatOf(ids[i]) < 0 && takeSeat(ids[i]) >= 0) { requestSave(ids[i]); changed = true; }
+  }
+  return changed;
 }
 
 // ---- persistence -----------------------------------------------------------------------------
@@ -227,6 +240,7 @@ function enterLobby() {
   timeScale = 1; slowT = 0; hitStop = 0; acc = 0;
   airconsole.setActivePlayers(0);                 // ends any round and admits waiting phones
   for (let i = 0; i < seats.length; i++) if (seats[i] && !seats[i].connected) seats[i] = null;
+  seatWaiting();
   fx.clear();
   const mapId = cfg.map === 0 ? "lagoon" : MAPS[cfg.map].id;
   world = createWorld({ map: useMap(mapId), mode: "lobby", seed: (Math.random() * 1e9) | 0, ducks: lobbyRoster() });
@@ -266,6 +280,7 @@ function startRound() {
   fx.clear();
   // Seats of players who left are released between rounds.
   for (let i = 0; i < seats.length; i++) if (seats[i] && !seats[i].connected) seats[i] = null;
+  seatWaiting();
   const humans = humanSeats();
   if (!humans.length) { enterLobby(); return; }
   const ducks = [];
@@ -284,8 +299,9 @@ function startRound() {
     match.names[keyOfDuck(d)] = { name: d.name, seat: d.seat, hat: d.hat, bot: d.isBot };
     recFor(keyOfDuck(d));
   }
-  // Player numbers first, then the view: controllers know who they are when they switch.
-  airconsole.setActivePlayers(MAX_PLAYERS);
+  // Round start. Every phone that is here now stays unsilenced (the ones without a seat show
+  // "pond is full"); phones that connect later wait until the round is over.
+  airconsole.setActivePlayers();
   publishNow();
   const sub = match.mode === "lms" ? "Round " + match.round + "  ·  first to " + match.goal : MODES[match.modeIndex].name;
   setBanner(map.name, sub, "#ffffff", 2.0, 84, 300);
@@ -711,6 +727,7 @@ function onControllerLeave(deviceId) {
   audio.play("leave");
   if (state === "LOBBY") {
     seats[si] = null;
+    seatWaiting();
     syncLobbyWorld(); renderLobby();
   } else if (state === "MATCH") {
     seats[si].connected = false;
@@ -720,6 +737,7 @@ function onControllerLeave(deviceId) {
     else seats[si] = null;
   } else {
     seats[si] = null;
+    seatWaiting();
     if (!humanSeats().length) { enterLobby(); return; }
     if (results) {
       const master = airconsole.getMasterControllerDeviceId();
@@ -732,14 +750,11 @@ function onControllerLeave(deviceId) {
 
 airconsole.onReady = function () {
   ready = true;
+  audio.unlock();
   const ids = airconsole.getControllerDeviceIds();
   for (let i = 0; i < ids.length; i++) requestSave(ids[i]);
-  const boot = function () {
-    // onConnect already fired for phones that were here first; give them their seats now.
-    const present = airconsole.getControllerDeviceIds();
-    for (let i = 0; i < present.length; i++) if (seatOf(present[i]) < 0) takeSeat(present[i]);
-    enterLobby();
-  };
+  // onConnect already fired for phones that were here first; enterLobby() seats them.
+  const boot = function () { enterLobby(); };
   // Wait for the fonts so the first canvas text is not drawn in a fallback face.
   if (document.fonts && document.fonts.load) {
     let done = false;
@@ -867,7 +882,7 @@ airconsole.onSetSafeArea = function (a) {
 ["pointerdown", "keydown", "touchstart", "mousedown"].forEach(function (n) {
   window.addEventListener(n, function () { audio.unlock(); }, { passive: true });
 });
-window.addEventListener("resize", function () { renderer.resize(); });
+window.addEventListener("resize", function () { renderer.resize(); needsPaint = true; });
 
 // ---- main loop -------------------------------------------------------------------------------
 function frame(now) {
@@ -876,7 +891,15 @@ function frame(now) {
   const realDt = Math.min((now - lastFrame) / 1000, 1 / 20);     // a suspended tab must not jump
   lastFrame = now;
   if (state === "LOADING") return;
-  if (paused || adShowing) return;                                // frozen picture, silent
+  if (paused || adShowing) {                                      // frozen picture, silent
+    // Paused before the first frame (pause-on-start) or resized while paused: paint once.
+    if (needsPaint && world) {
+      needsPaint = false;
+      renderer.draw(world, { alpha: 0, time: time, hud: buildHud(), dim: state === "RESULTS" ? 0.45 : (state === "LOBBY" ? 0.12 : 0) });
+    }
+    return;
+  }
+  needsPaint = false;
 
   time += realDt;
   if (publishT > 0) publishT -= realDt;
@@ -915,7 +938,7 @@ function frame(now) {
       if (match.pulseT <= 0) {
         match.pulseT = 15;
         airconsole.setActivePlayers(0);
-        airconsole.setActivePlayers(MAX_PLAYERS);
+        airconsole.setActivePlayers();
       }
     }
   } else if (state === "RESULTS") {
@@ -966,6 +989,7 @@ window.__duckwars = {
   get paused() { return paused || adShowing; },
   get time() { return time; },
   get banner() { return banner; },
+  get bakeMs() { return renderer.bakeMs(); },
   lockQuality: function (q) { qualityLock = true; renderer.setQuality(q); },
   fx: fx
 };

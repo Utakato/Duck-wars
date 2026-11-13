@@ -3,12 +3,12 @@
 import { WEAPON_DEFS, normAngle } from "./weapons.js";
 
 // Per skill level: 0 easy, 1 normal, 2 hard.
-const AIM_ERR = [0.30, 0.13, 0.04];
-const REACT = [0.75, 0.38, 0.14];
+const AIM_ERR = [0.36, 0.13, 0.04];
+const REACT = [0.9, 0.38, 0.14];
 const DODGE = [0.06, 0.35, 0.8];
 const THINK = [0.32, 0.2, 0.12];
 const CRATE_RANGE = [380, 650, 950];
-const THROTTLE = [0.82, 0.95, 1];
+const THROTTLE = [0.78, 0.95, 1];
 
 export function newBrain(world, duck) {
   const r = world.rng;
@@ -214,24 +214,27 @@ export function thinkBot(world, d, dt) {
     // Hold the big guns when the splash would hurt more than it helps.
     if (fire && d.weapon === 3 && dist < 95) fire = false;
   } else if (br.mode === "keepaway") {
-    // Carrying the loaf: run from whoever is closest, hugging open water.
-    let ax = 0, ay = 0;
-    for (let i = 0; i < world.ducks.length; i++) {
-      const o = world.ducks[i];
-      if (o === d || !o.alive) continue;
-      const dx = d.x - o.x, dy = d.y - o.y;
-      const dist = Math.hypot(dx, dy) || 1;
-      const wgt = 1 / (dist * dist) * 40000;
-      ax += dx / dist * wgt; ay += dy / dist * wgt;
+    // Carrying the loaf: look around in 16 directions and paddle to wherever the pack is
+    // furthest away, never into the bank, and without flip-flopping between two headings.
+    let bestS = -Infinity, bx = 0, by = 0;
+    for (let k = 0; k < 16; k++) {
+      const a = k * Math.PI / 8;
+      const cx = Math.cos(a), cy = Math.sin(a);
+      const px = d.x + cx * 130, py = d.y + cy * 130;
+      const depth = Math.min(map.depth(px, py), map.depth(d.x + cx * 60, d.y + cy * 60));
+      if (depth < 26) continue;
+      let near = 600;
+      for (let i = 0; i < world.ducks.length; i++) {
+        const o = world.ducks[i];
+        if (o === d || !o.alive) continue;
+        const dist = Math.hypot(o.x - px, o.y - py);
+        if (dist < near) near = dist;
+      }
+      const sc = near + Math.min(depth, 90) * 0.7 + (cx * br.mvx + cy * br.mvy) * 50;
+      if (sc > bestS) { bestS = sc; bx = cx; by = cy; }
     }
-    map.normal(d.x, d.y, br);                 // reuse br.x / br.y as scratch
-    const depth = map.depth(d.x, d.y);
-    const shore = Math.max(0, 1 - depth / 90) * 3;
-    ax += br.x * shore; ay += br.y * shore;
-    const sx = -ay * 0.35 * br.strafe, sy = ax * 0.35 * br.strafe;
-    ax += sx; ay += sy;
-    const l = Math.hypot(ax, ay);
-    if (l > 0.05) { br.mvx = ax / l; br.mvy = ay / l; } else { br.mvx = 0; br.mvy = 0; }
+    br.mvx = bx; br.mvy = by;
+    br.path = null;
     fire = !!tgt && Math.hypot(tgt.x - d.x, tgt.y - d.y) < WEAPON_DEFS[d.weapon].assist * 0.9 && br.react <= 0;
   } else if (br.mode === "haunt" && tgt) {
     steerTo(world, d, br, tgt.x, tgt.y);
@@ -287,5 +290,7 @@ export function thinkBot(world, d, dt) {
 
   const thr = THROTTLE[skill];
   inp.mx = mx * thr; inp.my = my * thr;
+  // Easy bots take breathers between bursts so new players get a word in.
+  if (skill === 0 && Math.sin(world.time * 1.7 + d.seat * 2.1) < -0.15) fire = false;
   inp.fire = fire && world.phase === "play";
 }
