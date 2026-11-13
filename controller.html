@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Duck Wars - controller</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <link rel="stylesheet" href="css/controller.css">
+  <!-- Same pinned AirConsole API as screen.html. Include exactly once. -->
+  <script src="https://www.airconsole.com/api/airconsole-1.11.0.js"></script>
+</head>
+<body>
+  <!-- CONNECT -->
+  <div id="view-CONNECT" class="view active center">
+    <div class="logo"><span>DUCK</span><span>WARS</span></div>
+    <div class="note">Paddling to the pond...</div>
+  </div>
+
+  <!-- LOBBY -->
+  <div id="view-LOBBY" class="view">
+    <div class="lobby-left">
+      <div class="me-name" id="lobby-name"></div>
+      <div class="avatar-wrap"><canvas id="lobby-duck" width="360" height="260"></canvas></div>
+      <div class="hat-row">
+        <div class="btn arrow" id="hat-prev" data-label="Previous hat">&#9664;</div>
+        <div class="hat-name" id="hat-name"></div>
+        <div class="btn arrow" id="hat-next" data-label="Next hat">&#9654;</div>
+      </div>
+      <div class="btn quack" id="lobby-quack">QUACK!</div>
+    </div>
+    <div class="lobby-right">
+      <div id="host-panel">
+        <div class="set" data-k="mode"><div class="btn arrow prev">&#9664;</div><div class="set-val"><small>Mode</small><b id="c-mode"></b></div><div class="btn arrow next">&#9654;</div></div>
+        <div class="set" data-k="map"><div class="btn arrow prev">&#9664;</div><div class="set-val"><small>Pond</small><b id="c-map"></b></div><div class="btn arrow next">&#9654;</div></div>
+        <div class="set" data-k="goal"><div class="btn arrow prev">&#9664;</div><div class="set-val"><small id="c-goal-label">Goal</small><b id="c-goal"></b></div><div class="btn arrow next">&#9654;</div></div>
+        <div class="set-pair">
+          <div class="set" data-k="bots"><div class="btn arrow prev">&#9664;</div><div class="set-val"><small>Bots</small><b id="c-bots"></b></div><div class="btn arrow next">&#9654;</div></div>
+          <div class="set" data-k="diff"><div class="btn arrow prev">&#9664;</div><div class="set-val"><small>Skill</small><b id="c-diff"></b></div><div class="btn arrow next">&#9654;</div></div>
+        </div>
+        <div class="btn start" id="start">START BATTLE</div>
+      </div>
+      <div id="guest-panel">
+        <div class="note big" id="guest-text"></div>
+        <div class="summary" id="guest-summary"></div>
+        <div class="note">Pick a hat and warm up your quack.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="view-GAME" class="view">
+    <div class="status">
+      <canvas id="game-duck" width="120" height="96"></canvas>
+      <div class="status-mid">
+        <div class="status-name" id="game-name"></div>
+        <div class="hp"><div class="hp-fill" id="hp-fill"></div></div>
+      </div>
+      <div class="weapon">
+        <canvas id="weapon-icon" width="96" height="72"></canvas>
+        <div class="weapon-text"><b id="weapon-name"></b><span id="weapon-ammo"></span></div>
+      </div>
+    </div>
+    <div class="pad">
+      <div class="stick-zone" id="stick-zone">
+        <div class="stick-hint">PADDLE</div>
+        <div class="stick-base" id="stick-base"><div class="stick-knob" id="stick-knob"></div></div>
+      </div>
+      <div class="buttons">
+        <div class="btn-row">
+          <div class="btn dive" id="dive">DIVE</div>
+          <div class="btn quack" id="quack">QUACK</div>
+        </div>
+        <div class="btn fire" id="fire">FIRE</div>
+      </div>
+    </div>
+    <div class="banner" id="game-banner"></div>
+    <div class="toast" id="game-toast"></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="view-RESULTS" class="view center">
+    <div class="place" id="res-place"></div>
+    <div class="note big" id="res-text"></div>
+    <div class="res-buttons" id="res-buttons">
+      <div class="btn start" id="rematch">REMATCH</div>
+      <div class="btn ghost" id="to-lobby">LOBBY</div>
+    </div>
+    <div class="note" id="res-wait"></div>
+  </div>
+
+  <!-- WAIT / FULL -->
+  <div id="view-WAIT" class="view center">
+    <div class="logo"><span>DUCK</span><span>WARS</span></div>
+    <div class="note big" id="wait-text"></div>
+  </div>
+
+  <script type="module" src="js/controller/main.js"></script>
+</body>
+</html>

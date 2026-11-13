@@ -1,0 +1,14 @@
+{
+  "name": "duck-wars",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Duck Wars: Pond Royale. A couch-multiplayer pond battle for AirConsole.",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "test": "node tests/sim.spec.mjs && node tests/audio.spec.mjs && node tests/e2e.spec.mjs",
+    "test:sim": "node tests/sim.spec.mjs",
+    "test:e2e": "node tests/e2e.spec.mjs",
+    "package": "node tools/package.mjs"
+  }
+}

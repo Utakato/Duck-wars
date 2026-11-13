@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Duck Wars - screen</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/screen.css">
+  <!-- Pinned AirConsole API. Include exactly once. -->
+  <script src="https://www.airconsole.com/api/airconsole-1.11.0.js"></script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="loading" class="overlay show">
+    <div class="load-box">
+      <div class="logo small"><span>DUCK</span><span>WARS</span></div>
+      <div class="spinner"><div></div><div></div><div></div></div>
+    </div>
+  </div>
+
+  <div id="lobby" class="overlay">
+    <div class="lobby-top">
+      <div class="logo"><span>DUCK</span><span>WARS</span><em>Pond Royale</em></div>
+      <div id="lobby-hint" class="hint-pill"></div>
+    </div>
+    <div class="lobby-mid">
+      <div class="panel howto">
+        <h2>How to play</h2>
+        <div class="phone">
+          <div class="phone-stick"><div class="knob"></div><b>PADDLE</b></div>
+          <div class="phone-btns">
+            <div class="phone-row"><div class="pb dive">DIVE</div><div class="pb quack">QUACK</div></div>
+            <div class="pb fire">FIRE</div>
+          </div>
+        </div>
+        <ul>
+          <li><b>Paddle</b> with your left thumb. Your duck aims by itself at the nearest rival.</li>
+          <li><b>Fire</b> to shoot. Crates hold better guns, bread heals.</li>
+          <li><b>Dive</b> under bullets and pop up somewhere else.</li>
+        </ul>
+      </div>
+      <div class="panel settings">
+        <h2>Match</h2>
+        <div class="set-row"><span>Mode</span><b id="set-mode"></b></div>
+        <div class="set-desc" id="set-desc"></div>
+        <div class="set-row"><span>Pond</span><b id="set-map"></b></div>
+        <div class="set-row"><span id="set-goal-label">Goal</span><b id="set-goal"></b></div>
+        <div class="set-row"><span>Bots</span><b id="set-bots"></b></div>
+        <div class="set-row"><span>Bot skill</span><b id="set-diff"></b></div>
+      </div>
+    </div>
+    <div id="lobby-players" class="players"></div>
+  </div>
+
+  <div id="results" class="overlay">
+    <div class="results-title" id="results-title"></div>
+    <div class="podium" id="podium"></div>
+    <div class="awards" id="awards"></div>
+    <div class="hint-pill" id="results-hint"></div>
+  </div>
+
+  <div id="toasts"></div>
+
+  <script type="module" src="js/screen/main.js"></script>
+</body>
+</html>

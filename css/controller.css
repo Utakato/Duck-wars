@@ -1,0 +1,163 @@
+@font-face {
+  font-family: "Lilita One";
+  src: url("../fonts/LilitaOne-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fredoka";
+  src: url("../fonts/Fredoka.ttf") format("truetype");
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+:root {
+  --pc: #ffd23f;        /* player colour, set from JS */
+  --pcd: #c78a00;
+  --pcl: #fff3b0;
+  --ink: #141a2a;
+  --bg: #16203a;
+  --panel: rgba(255, 255, 255, 0.08);
+}
+
+html, body {
+  height: 100%; margin: 0; overflow: hidden;
+  background: var(--bg); color: #fff;
+  font-family: "Fredoka", "Trebuchet MS", sans-serif;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent; touch-action: none;
+}
+body {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, var(--pcd), var(--bg) 62%);
+}
+
+.view { display: none; position: absolute; left: 0; top: 0; right: 0; bottom: 0; box-sizing: border-box; }
+.view.active { display: flex; }
+.view.center { flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4vh 5vw; gap: 3vh; }
+
+.logo {
+  font-family: "Lilita One", "Arial Black", sans-serif; font-size: 18vh; line-height: 0.9;
+  display: flex; gap: 2vw; filter: drop-shadow(0 1vh 0 var(--ink));
+}
+.logo span { color: #ffd23f; -webkit-text-stroke: 1vh var(--ink); paint-order: stroke fill; }
+.logo span:nth-child(2) { color: #ff5964; }
+.note { font-size: 5vh; opacity: 0.85; line-height: 1.25; }
+.note.big { font-size: 7vh; font-weight: 600; opacity: 1; }
+
+/* ---- buttons: divs, as large as the layout allows ---- */
+.btn {
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  font-family: "Lilita One", "Arial Black", sans-serif; letter-spacing: 0.04em;
+  border-radius: 3.5vh; border: 0.8vh solid var(--ink);
+  box-shadow: 0 1.4vh 0 var(--ink);
+  transition: transform 0.05s, box-shadow 0.05s, filter 0.05s;
+}
+.btn.down { transform: translateY(1.1vh); box-shadow: 0 0.3vh 0 var(--ink); filter: brightness(1.18); }
+.btn.off { filter: grayscale(0.8) brightness(0.6); }
+.btn.arrow { background: var(--pc); color: var(--ink); font-size: 6vh; width: 13vh; flex: 0 0 13vh; border-radius: 3vh; }
+.btn.quack { background: #ffd23f; color: var(--ink); }
+.btn.start { background: #6be36b; color: var(--ink); }
+.btn.ghost { background: rgba(255, 255, 255, 0.16); color: #fff; }
+
+/* ---- lobby ---- */
+#view-LOBBY { padding: 3vh 2.5vw; gap: 2.5vw; }
+.lobby-left { flex: 0 0 36%; display: flex; flex-direction: column; align-items: stretch; gap: 2vh; min-width: 0; }
+.lobby-right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.me-name {
+  font-size: 6vh; font-weight: 700; text-align: center; color: var(--pcl);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.avatar-wrap {
+  flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.10); border-radius: 4vh; border: 0.8vh solid var(--pc);
+}
+.avatar-wrap canvas { max-width: 100%; max-height: 100%; height: 100%; object-fit: contain; }
+.hat-row { display: flex; align-items: stretch; gap: 1.2vw; height: 13vh; }
+.hat-name { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 5vh; font-weight: 600; min-width: 0; white-space: nowrap; }
+.lobby-left .btn.quack { height: 17vh; font-size: 8vh; }
+
+#host-panel, #guest-panel { flex: 1; display: none; flex-direction: column; gap: 1.8vh; min-height: 0; }
+#host-panel.on, #guest-panel.on { display: flex; }
+#guest-panel { align-items: center; justify-content: center; text-align: center; gap: 3vh; }
+.set { flex: 1; display: flex; align-items: stretch; gap: 1vw; min-height: 0; }
+.set-pair { flex: 1; display: flex; gap: 1.5vw; min-height: 0; }
+.set-pair .set { flex: 1; }
+.set-pair .btn.arrow { width: 9vh; flex-basis: 9vh; font-size: 5vh; }
+.set-val {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--panel); border-radius: 3vh; line-height: 1.05; padding: 0 1vw;
+}
+.set-val small { font-size: 3.2vh; opacity: 0.65; text-transform: uppercase; letter-spacing: 0.12em; }
+.set-val b { font-size: 5.2vh; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+#start { flex: 1.5; font-size: 9vh; }
+.summary { font-size: 4.6vh; opacity: 0.9; background: var(--panel); border-radius: 3vh; padding: 2.5vh 3vw; line-height: 1.35; }
+
+/* ---- game ---- */
+#view-GAME { flex-direction: column; }
+.status {
+  flex: 0 0 17vh; display: flex; align-items: center; gap: 1.5vw; padding: 0 2vw;
+  background: rgba(10, 14, 26, 0.55); border-bottom: 0.8vh solid var(--pc);
+}
+.status canvas#game-duck { height: 15vh; width: auto; }
+.status-mid { flex: 1; min-width: 0; }
+.status-name { font-size: 4.6vh; font-weight: 700; color: var(--pcl); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hp { height: 4.4vh; border-radius: 2.2vh; background: rgba(0, 0, 0, 0.5); overflow: hidden; border: 0.5vh solid var(--ink); margin-top: 0.6vh; }
+.hp-fill { height: 100%; width: 100%; border-radius: 2vh; background: #6be36b; transition: width 0.15s, background-color 0.15s; }
+.hp.shield { box-shadow: 0 0 0 0.7vh #8fe3ff; }
+.weapon { flex: 0 0 38%; display: flex; align-items: center; gap: 1vw; justify-content: flex-end; min-width: 0; }
+.weapon canvas { height: 12vh; width: auto; }
+.weapon-text { display: flex; flex-direction: column; align-items: flex-end; min-width: 0; line-height: 1.05; }
+.weapon-text b { font-size: 4.4vh; font-weight: 600; white-space: nowrap; }
+.weapon-text span { font-size: 5.6vh; font-family: "Lilita One", sans-serif; color: var(--pcl); }
+
+.pad { flex: 1; display: flex; min-height: 0; }
+.stick-zone { flex: 1; position: relative; overflow: hidden; }
+.stick-hint {
+  position: absolute; left: 0; right: 0; bottom: 5vh; text-align: center; font-size: 5vh; letter-spacing: 0.3em;
+  opacity: 0.28; font-family: "Lilita One", sans-serif; pointer-events: none;
+}
+.stick-base {
+  position: absolute; left: 50%; top: 46%; width: 44vh; height: 44vh; margin: -22vh 0 0 -22vh; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07); border: 0.8vh dashed rgba(255, 255, 255, 0.28); box-sizing: border-box; pointer-events: none;
+}
+.stick-base.live { border-style: solid; border-color: var(--pc); background: rgba(255, 255, 255, 0.12); }
+.stick-knob {
+  position: absolute; left: 50%; top: 50%; width: 20vh; height: 20vh; margin: -10vh 0 0 -10vh; border-radius: 50%;
+  background: var(--pc); border: 0.8vh solid var(--ink); box-sizing: border-box; box-shadow: 0 1.2vh 0 rgba(0, 0, 0, 0.35);
+}
+.buttons { flex: 1; display: flex; flex-direction: column; gap: 2.4vh; padding: 2.4vh 2vw 3.6vh 1vw; min-width: 0; }
+.btn-row { flex: 0 0 34%; display: flex; gap: 1.6vw; }
+.btn-row .btn { flex: 1; font-size: 7vh; }
+.btn.dive { background: #41b0ff; color: var(--ink); }
+.btn.fire { flex: 1; background: #ff5964; color: #fff; font-size: 15vh; text-shadow: 0 0.8vh 0 rgba(0, 0, 0, 0.3); }
+.btn.fire.boo { background: #b9c4e8; color: var(--ink); text-shadow: none; }
+
+.banner {
+  position: absolute; left: 50%; top: 20vh; transform: translateX(-50%); display: none;
+  background: rgba(10, 14, 26, 0.9); border: 0.7vh solid var(--pc); border-radius: 3vh;
+  padding: 1.6vh 3vw; font-size: 5.4vh; font-weight: 600; text-align: center; pointer-events: none; white-space: nowrap;
+}
+.banner.on { display: block; }
+.toast {
+  position: absolute; left: 50%; bottom: 3vh; transform: translateX(-50%); opacity: 0;
+  background: rgba(10, 14, 26, 0.92); border-radius: 3vh; padding: 1.4vh 3vw; font-size: 4.8vh; font-weight: 600;
+  pointer-events: none; white-space: nowrap; transition: opacity 0.2s;
+}
+.toast.on { opacity: 1; }
+
+/* ---- results ---- */
+.place { font-family: "Lilita One", sans-serif; font-size: 22vh; line-height: 1; color: var(--pc); -webkit-text-stroke: 1vh var(--ink); paint-order: stroke fill; }
+.res-buttons { display: none; gap: 3vw; width: 86vw; height: 24vh; }
+.res-buttons.on { display: flex; }
+.res-buttons .btn { flex: 1; font-size: 9vh; }
+
+/* Very wide or very short phones: keep the text readable */
+@media (max-height: 300px) {
+  .note { font-size: 6vh; }
+}
+/* If a phone ends up in portrait anyway, the layout still works: stack the pad */
+@media (orientation: portrait) {
+  .logo { font-size: 16vw; }
+  .logo span { -webkit-text-stroke: 1vw var(--ink); }
+}
