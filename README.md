@@ -62,6 +62,14 @@ node tools/serve.mjs            # serves the folder on http://localhost:8080
   join at airconsole.com with the code. Use the LAN IP, never `localhost`. If the network isolates
   clients, use a tunnel (`cloudflared tunnel --url http://localhost:8080`) and the `https` forms.
 
+### Hosted copy
+
+The folder deploys to any static host as it is (`vercel.json` turns the build step off;
+`.vercelignore` leaves out tests and tools). `index.html` is a small landing page with three
+links built from wherever it is served: the local simulator (`dev/`), the AirConsole simulator
+and the real AirConsole screen. It is not part of the AirConsole upload. The host must serve the
+files without a login wall, or AirConsole and the phones cannot load them.
+
 ## Tests
 
 ```
@@ -102,6 +110,7 @@ These cannot be checked from a headless container and should be done before subm
 
 ```
 screen.html, controller.html     the two pages AirConsole loads
+index.html                       landing page for a hosted copy (not in the AirConsole upload)
 css/                             screen.css, controller.css
 js/shared/config.js              colours, hats, modes, weapon names, the message protocol
 js/shared/duckart.js             vector art for ducks, hats, weapons, pickups (canvas paths)

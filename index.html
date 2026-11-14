@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Duck Wars: Pond Royale</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <!-- Landing page for a hosted copy of the game. It is not part of the AirConsole upload:
+       AirConsole only loads screen.html and controller.html. -->
+  <style>
+    @font-face { font-family: "Lilita One"; src: url("fonts/LilitaOne-Regular.ttf") format("truetype"); font-display: swap; }
+    @font-face { font-family: "Fredoka"; src: url("fonts/Fredoka.ttf") format("truetype"); font-weight: 300 700; font-display: swap; }
+    :root { --ink: #141a2a; --sun: #ffd23f; --cherry: #ff5964; --sky: #41b0ff; --lime: #6be36b; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: "Fredoka", "Trebuchet MS", sans-serif; color: #fff; line-height: 1.45;
+      background:
+        radial-gradient(90% 60% at 50% 0%, rgba(120, 220, 230, 0.55), rgba(120, 220, 230, 0) 70%),
+        linear-gradient(180deg, #1f7fc4, #124a86 70%, #0e2f5c);
+      background-attachment: fixed;
+    }
+    main { max-width: 960px; margin: 0 auto; padding: 40px 16px 56px; }
+    .logo {
+      font-family: "Lilita One", "Arial Black", sans-serif; font-size: clamp(56px, 13vw, 128px); line-height: 0.92;
+      display: flex; flex-wrap: wrap; gap: 0 0.14em; margin: 0; filter: drop-shadow(0 8px 0 var(--ink));
+    }
+    .logo span { color: var(--sun); -webkit-text-stroke: 0.05em var(--ink); paint-order: stroke fill; }
+    .logo span + span { color: var(--cherry); }
+    .tag {
+      display: inline-block; margin: 14px 0 0; padding: 6px 18px; border-radius: 999px; background: var(--ink);
+      font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; font-size: 15px;
+    }
+    .lead { font-size: clamp(18px, 2.4vw, 22px); max-width: 44em; margin: 22px 0 30px; }
+    .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .card {
+      display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: 22px; text-decoration: none; color: #fff;
+      background: rgba(16, 22, 38, 0.72); border: 3px solid rgba(255, 255, 255, 0.18);
+      transition: transform 0.12s, border-color 0.12s;
+    }
+    .card:hover, .card:focus-visible { transform: translateY(-4px); border-color: #fff; outline: none; }
+    .card h2 { margin: 0; font-family: "Lilita One", sans-serif; font-weight: 400; font-size: 26px; letter-spacing: 0.02em; }
+    .card p { margin: 0; opacity: 0.9; font-size: 16px; flex: 1; }
+    .go {
+      align-self: flex-start; padding: 10px 20px; border-radius: 14px; border: 3px solid var(--ink); box-shadow: 0 5px 0 var(--ink);
+      font-family: "Lilita One", sans-serif; font-size: 20px; color: var(--ink); letter-spacing: 0.04em;
+    }
+    .a .go { background: var(--lime); } .a h2 { color: var(--lime); }
+    .b .go { background: var(--sun); } .b h2 { color: var(--sun); }
+    .c .go { background: var(--sky); } .c h2 { color: var(--sky); }
+    .note { margin-top: 30px; padding: 18px 20px; border-radius: 18px; background: rgba(16, 22, 38, 0.5); font-size: 16px; }
+    .note b { color: var(--sun); }
+    kbd {
+      display: inline-block; padding: 1px 8px; border-radius: 7px; background: #fff; color: var(--ink); font: 600 14px "Fredoka", sans-serif;
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35); margin: 0 1px;
+    }
+    code { background: rgba(0, 0, 0, 0.3); padding: 2px 6px; border-radius: 6px; word-break: break-all; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 class="logo"><span>DUCK</span><span>WARS</span></h1>
+    <div class="tag">Pond Royale</div>
+    <p class="lead">A pond battle for up to eight ducks, made for AirConsole: the big screen is the pond and every phone is a gamepad. Pick how you want to try it.</p>
+
+    <div class="cards">
+      <a class="card a" id="quick" href="dev/">
+        <h2>Quick preview</h2>
+        <p>Runs right here in this browser tab: the screen plus virtual phones side by side. No account and no phone needed. Best on a computer.</p>
+        <span class="go">OPEN</span>
+      </a>
+      <a class="card b" id="sim" href="https://www.airconsole.com/simulator/">
+        <h2>AirConsole simulator</h2>
+        <p>The official simulator loads this copy of the game. Real phones can join the same session with the code it shows.</p>
+        <span class="go">OPEN</span>
+      </a>
+      <a class="card c" id="real" href="https://www.airconsole.com/">
+        <h2>TV and phones</h2>
+        <p>Open this on the big screen, then join from each phone at airconsole.com with the code. This is how it is meant to be played.</p>
+        <span class="go">OPEN</span>
+      </a>
+    </div>
+
+    <div class="note">
+      <b>Quick preview keys.</b> Click a phone on the right first, then
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> paddle, <kbd>Space</kbd> fire, <kbd>Shift</kbd> dive, <kbd>Q</kbd> quack,
+      <kbd>Enter</kbd> start the battle. Bots fill the empty seats.
+      <br><br>
+      <b>This copy lives at</b> <code id="base"></code>
+    </div>
+  </main>
+  <script>
+    (function () {
+      // The folder this page is served from is the game's base URL for AirConsole.
+      var base = location.origin + location.pathname.replace(/[^\/]*$/, "");
+      document.getElementById("base").textContent = base;
+      document.getElementById("sim").href = "https://www.airconsole.com/simulator/#debug:" + base;
+      document.getElementById("real").href = "https://www.airconsole.com/#" + base;
+    })();
+  </script>
+</body>
+</html>
